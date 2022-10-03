@@ -46,8 +46,6 @@ class _HomeState extends State<Home> {
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               List<dynamic> data = snapshot.data!.results;
-              print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-              print(data);
               return ListView.builder(
                 itemCount: data.length,
                 itemBuilder: (context, idx) {
