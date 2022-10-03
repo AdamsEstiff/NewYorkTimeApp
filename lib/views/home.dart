@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
+import 'package:new_york_times_app/components/Card.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -49,13 +50,17 @@ class _HomeState extends State<Home> {
               return ListView.builder(
                 itemCount: data.length,
                 itemBuilder: (context, idx) {
+                  var items = data[idx];
+                  String title = items['title'];
+                  String abstract = items['abstract'];
+                  String url = items['url'];
+                  dynamic media = items['media'];
                   return Container(
-                    margin: EdgeInsets.all(50),
-                    color: Colors.green,
-                    child: Text(
-                      data.toString(),
-                      style: TextStyle(color: Colors.black, fontSize: 11),
-                    ),
+                    child: CardNews(
+                        title: title,
+                        abstract: abstract,
+                        url: url,
+                        image: media),
                   );
                 },
               );

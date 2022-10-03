@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class Card extends StatelessWidget {
-  const Card(
+class CardNews extends StatelessWidget {
+  const CardNews(
       {Key? key,
       required this.title,
       required this.abstract,
@@ -11,10 +11,13 @@ class Card extends StatelessWidget {
   final String title;
   final String abstract;
   final String url;
-  final String image;
+  final dynamic image;
 
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Text(
+      title,
+      style: TextStyle(color: Colors.black, fontSize: 11),
+    );
   }
 }
