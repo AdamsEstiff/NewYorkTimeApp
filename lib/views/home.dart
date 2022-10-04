@@ -4,12 +4,53 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:new_york_times_app/components/Card.dart';
 import 'package:new_york_times_app/components/input.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:flutter/services.dart';
+import 'package:country_codes/country_codes.dart';
+
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
 
   @override
   State<Home> createState() => _HomeState();
+}
+
+Future<Position> _determinePosition() async {
+  bool serviceEnabled;
+  LocationPermission permission;
+
+  // Test if location services are enabled.
+  serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    // Location services are not enabled don't continue
+    // accessing the position and request users of the
+    // App to enable the location services.
+    return Future.error('Location services are disabled.');
+  }
+
+  permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      // Permissions are denied, next time you could try
+      // requesting permissions again (this is also where
+      // Android's shouldShowRequestPermissionRationale
+      // returned true. According to Android guidelines
+      // your App should show an explanatory UI now.
+      return Future.error('Location permissions are denied');
+    }
+  }
+
+  if (permission == LocationPermission.deniedForever) {
+    // Permissions are denied forever, handle appropriately.
+    return Future.error(
+        'Location permissions are permanently denied, we cannot request permissions.');
+  }
+
+  // When we reach here, permissions are granted and we can
+  // continue accessing the position of the device.
+  return await Geolocator.getCurrentPosition();
 }
 
 Future<News> fetchNews() async {
@@ -30,14 +71,20 @@ class News {
 }
 
 class _HomeState extends State<Home> {
+
   late Future<News> futureNews;
+  late Future<Position> position;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   TextEditingController title = TextEditingController();
   late var newsFilter;
+  CountryDetails details = CountryCodes.detailsForLocale();
 
   @override
   void initState() {
     futureNews = fetchNews();
+    position = _determinePosition();
+
+    Locale locale = CountryCodes.getDeviceLocale()!;
     listeners();
     super.initState();
   }
@@ -46,7 +93,7 @@ class _HomeState extends State<Home> {
     title.addListener(() {
       if (title.value.text == title.value.text) {
         setState(() {
-           title.value.text;
+          title.value.text;
         });
       }
     });
@@ -64,18 +111,45 @@ class _HomeState extends State<Home> {
                 child: Image.network(
                     'https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/The_New_York_Times_Logo.svg/2560px-The_New_York_Times_Logo.svg.png'),
               ),
+              FutureBuilder<Position>(future: position, builder: (context, snapshot) {
+                if(snapshot.hasData){
+                  var data = snapshot.data!;
+                  return Text(data.toString());
+                } else if (snapshot.hasError) {
+                  return Text(
+                    '${snapshot.error}',
+                    style: TextStyle(color: Colors.black, fontSize: 11),
+                  );
+                }
+                return Center(child: CircularProgressIndicator(),);
+              }),
               Container(
                 padding: const EdgeInsets.fromLTRB(25, 0, 25, 10),
                 child: Center(
                     child: Container(
                   child: Center(
-                    child: Text(
-                      'Good Morning Costa Rica, here are the most viewed articles for the las day!',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.black,
-                        decoration: TextDecoration.none,
-                      ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Good Morning, ',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.black,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                        Text(details.name.toString(), style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            decoration: TextDecoration.none,)),
+                        Text('here are the most viewed articles for the las day!',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.black,
+                            decoration: TextDecoration.none,
+                        ))
+                      ],
                     ),
                   ),
                 )),
@@ -113,7 +187,7 @@ class _HomeState extends State<Home> {
                       style: TextStyle(color: Colors.black, fontSize: 11),
                     );
                   }
-                  return const CircularProgressIndicator();
+                  return Center(child: const CircularProgressIndicator());
                 },
               ),
             ],
