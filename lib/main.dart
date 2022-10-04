@@ -14,6 +14,7 @@ class MyApp extends StatelessWidget {
       title: 'NewYork Times',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        fontFamily: "times new roman",
       ),
       home: Home(),
     );

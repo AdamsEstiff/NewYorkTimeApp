@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
-import 'package:new_york_times_app/components/Card.dart';
+import 'package:new_york_times_app/components/input.dart';
+import 'package:new_york_times_app/components/CardList.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -14,7 +15,6 @@ class Home extends StatefulWidget {
 Future<News> fetchNews() async {
   final response = await http.get(Uri.parse(
       'https://api.nytimes.com/svc/mostpopular/v2/shared/1/facebook.json?api-key=Lqo0YKENCZ9CxQJa9djDu0tJM0g4nulQ'));
-  print(response.body);
   return News.fromJson(jsonDecode(response.body));
 }
 
@@ -30,6 +30,8 @@ class News {
 
 class _HomeState extends State<Home> {
   late Future<News> futureNews;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  TextEditingController title = TextEditingController();
 
   @override
   void initState() {
@@ -38,42 +40,43 @@ class _HomeState extends State<Home> {
   }
 
   @override
+  void dispose() {
+    title.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
-      child: Center(
-        child: FutureBuilder<News>(
-          future: futureNews,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              List<dynamic> data = snapshot.data!.results;
-              return ListView.builder(
-                itemCount: data.length,
-                itemBuilder: (context, idx) {
-                  var items = data[idx];
-                  String title = items['title'];
-                  String abstract = items['abstract'];
-                  String url = items['url'];
-                  dynamic media = items['media'];
-                  return Container(
-                    child: CardNews(
-                        title: title,
-                        abstract: abstract,
-                        url: url,
-                        image: media),
-                  );
-                },
-              );
-            } else if (snapshot.hasError) {
-              return Text(
-                '${snapshot.error}',
-                style: TextStyle(color: Colors.black, fontSize: 11),
-              );
-            }
-            return const CircularProgressIndicator();
-          },
-        ),
-      ),
-    );
+        color: Colors.white,
+        child: ListView(
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(25, 10, 25, 10),
+              child: Image.network(
+                  'https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/The_New_York_Times_Logo.svg/2560px-The_New_York_Times_Logo.svg.png'),
+            ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(25, 0, 25, 10),
+              child: Center(
+                  child: Container(
+                child: Text(
+                  'Good Morning Costa Rica, here are the most viewed articles for the las day!',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.black,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+              )),
+            ),
+            Form(
+                key: _formKey,
+                child: Input(
+                  controller: title,
+                )),
+            SingleChildScrollView(child: CardList(futureNews: futureNews))
+          ],
+        ));
   }
 }
