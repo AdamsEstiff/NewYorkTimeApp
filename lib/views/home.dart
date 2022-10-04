@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
+import 'package:new_york_times_app/components/Card.dart';
 import 'package:new_york_times_app/components/input.dart';
-import 'package:new_york_times_app/components/CardList.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -15,6 +15,7 @@ class Home extends StatefulWidget {
 Future<News> fetchNews() async {
   final response = await http.get(Uri.parse(
       'https://api.nytimes.com/svc/mostpopular/v2/shared/1/facebook.json?api-key=Lqo0YKENCZ9CxQJa9djDu0tJM0g4nulQ'));
+
   return News.fromJson(jsonDecode(response.body));
 }
 
@@ -23,7 +24,7 @@ class News {
 
   const News({required this.results});
 
-  factory News.fromJson(Map<String, dynamic> json) {
+  factory News.fromJson(json) {
     return News(results: json['results']);
   }
 }
@@ -32,51 +33,91 @@ class _HomeState extends State<Home> {
   late Future<News> futureNews;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   TextEditingController title = TextEditingController();
+  late var newsFilter;
 
   @override
   void initState() {
     futureNews = fetchNews();
+    listeners();
     super.initState();
   }
 
-  @override
-  void dispose() {
-    title.dispose();
-    super.dispose();
+  listeners() {
+    title.addListener(() {
+      if (title.value.text == title.value.text) {
+        setState(() {
+           title.value.text;
+        });
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        color: Colors.white,
-        child: ListView(
-          children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(25, 10, 25, 10),
-              child: Image.network(
-                  'https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/The_New_York_Times_Logo.svg/2560px-The_New_York_Times_Logo.svg.png'),
-            ),
-            Container(
-              padding: const EdgeInsets.fromLTRB(25, 0, 25, 10),
-              child: Center(
-                  child: Container(
-                child: Text(
-                  'Good Morning Costa Rica, here are the most viewed articles for the las day!',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.black,
-                    decoration: TextDecoration.none,
+    return Scaffold(
+      body: Container(
+          color: Colors.white,
+          child: ListView(
+            children: [
+              Container(
+                padding: const EdgeInsets.fromLTRB(25, 10, 25, 10),
+                child: Image.network(
+                    'https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/The_New_York_Times_Logo.svg/2560px-The_New_York_Times_Logo.svg.png'),
+              ),
+              Container(
+                padding: const EdgeInsets.fromLTRB(25, 0, 25, 10),
+                child: Center(
+                    child: Container(
+                  child: Center(
+                    child: Text(
+                      'Good Morning Costa Rica, here are the most viewed articles for the las day!',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
                   ),
-                ),
-              )),
-            ),
-            Form(
-                key: _formKey,
-                child: Input(
-                  controller: title,
                 )),
-            SingleChildScrollView(child: CardList(futureNews: futureNews))
-          ],
-        ));
+              ),
+              Form(
+                  key: _formKey,
+                  child: Input(
+                    controller: title,
+                  )),
+              FutureBuilder<News>(
+                future: futureNews,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    var data = snapshot.data!.results;
+                    newsFilter = data.where((element) {
+                      return element['title']
+                          .toLowerCase()
+                          .contains(title.value.text.trim().toLowerCase());
+                    }).toList();
+                    return Column(
+                      children: [
+                        for (var items in newsFilter)
+                          Container(
+                            child: CardNews(
+                                title: items['title'],
+                                abstract: items['abstract'],
+                                url: items['url'],
+                                media: items['media'][0]),
+                          ),
+                      ],
+                    );
+                  } else if (snapshot.hasError) {
+                    return Text(
+                      '${snapshot.error}',
+                      style: TextStyle(color: Colors.black, fontSize: 11),
+                    );
+                  }
+                  return const CircularProgressIndicator();
+                },
+              ),
+            ],
+          )),
+    );
   }
 }
