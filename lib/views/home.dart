@@ -117,93 +117,95 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        //se determina el color del fondo
-          color: Colors.white,
-          child: ListView(
-            //para colocar mas de un widget y que se pueda hacer scroll
-            children: [
-              //imagen de logo
-              Container(
-                padding: const EdgeInsets.fromLTRB(25, 10, 25, 10),
-                child: Image.network(
-                    'https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/The_New_York_Times_Logo.svg/2560px-The_New_York_Times_Logo.svg.png'),
-              ),
-              //se muestra un mensaje con el pais donde este el usuario
-              FutureBuilder<Position>(
-                  future: position,
+      body: SafeArea(
+        child: Container(
+          //se determina el color del fondo
+            color: Colors.white,
+            child: ListView(
+              //para colocar mas de un widget y que se pueda hacer scroll
+              children: [
+                //imagen de logo
+                Container(
+                  padding: const EdgeInsets.fromLTRB(25, 10, 25, 10),
+                  child: Image.network(
+                      'https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/The_New_York_Times_Logo.svg/2560px-The_New_York_Times_Logo.svg.png'),
+                ),
+                //se muestra un mensaje con el pais donde este el usuario
+                FutureBuilder<Position>(
+                    future: position,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        Position data = snapshot.data!;
+                        //se muestra un mensaje donde el usuario se encuentra
+                        //tambien se envia su latitud y longitud
+                        return LocalizationMobile(position: data);
+                        //verifica errores que pueden ocurrir
+                      } else if (snapshot.hasError) {
+                        //mensaje donde informa del error
+                        return Text(
+                          '${snapshot.error}',
+                          style: TextStyle(color: Colors.black, fontSize: 11),
+                        );
+                      }
+                      //lo que se muestra en pantalla mientras los datos se cargan
+                      //ya que son datos asincronos
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }),
+                //aca el imput para buscar informacion dentro de las noticias
+                Form(
+                    key: _formKey,
+                    //aqui un componente hecho por su servidor para que se
+                    // parezca a la propuesta
+                    child: Input(
+                      controller: title,
+                    )),
+                //aca se muestra la informacion de las noticias
+                FutureBuilder<News>(
+                  future: futureNews,
                   builder: (context, snapshot) {
+                    //verifica si la informacion ya a llegado
                     if (snapshot.hasData) {
-                      Position data = snapshot.data!;
-                      //se muestra un mensaje donde el usuario se encuentra
-                      //tambien se envia su latitud y longitud
-                      return LocalizationMobile(position: data);
-                      //verifica errores que pueden ocurrir
+                      //en esta parte se ordena la información segun la necesidad
+                      var data = snapshot.data!.results;
+                      //aca es donde se filtra segun lo escrito en el input
+                      newsFilter = data.where((element) {
+                        return element['title']
+                            .toLowerCase()
+                            .contains(title.value.text.trim().toLowerCase());
+                      }).toList();
+                      //aqui se hace una columna donde se pondran todas las Cards
+                      return Column(
+                        children: [
+                          //iteracion de elementos
+                          for (var items in newsFilter)
+                            Container(
+                              //componente para mostrar los elementos ordenados
+                              child: CardNews(
+                                  title: items['title'],
+                                  abstract: items['abstract'],
+                                  url: items['url'],
+                                  media: items['media'][0]),
+                            ),
+                        ],
+                      );
+                      // si a ocurrido un error, se mostrara un mensaje
                     } else if (snapshot.hasError) {
-                      //mensaje donde informa del error
+                      //aqui esta el mensaje
                       return Text(
                         '${snapshot.error}',
                         style: TextStyle(color: Colors.black, fontSize: 11),
                       );
                     }
-                    //lo que se muestra en pantalla mientras los datos se cargan
-                    //ya que son datos asincronos
-                    return Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }),
-              //aca el imput para buscar informacion dentro de las noticias
-              Form(
-                  key: _formKey,
-                  //aqui un componente hecho por su servidor para que se
-                  // parezca a la propuesta
-                  child: Input(
-                    controller: title,
-                  )),
-              //aca se muestra la informacion de las noticias
-              FutureBuilder<News>(
-                future: futureNews,
-                builder: (context, snapshot) {
-                  //verifica si la informacion ya a llegado
-                  if (snapshot.hasData) {
-                    //en esta parte se ordena la información segun la necesidad
-                    var data = snapshot.data!.results;
-                    //aca es donde se filtra segun lo escrito en el input
-                    newsFilter = data.where((element) {
-                      return element['title']
-                          .toLowerCase()
-                          .contains(title.value.text.trim().toLowerCase());
-                    }).toList();
-                    //aqui se hace una columna donde se pondran todas las Cards
-                    return Column(
-                      children: [
-                        //iteracion de elementos
-                        for (var items in newsFilter)
-                          Container(
-                            //componente para mostrar los elementos ordenados
-                            child: CardNews(
-                                title: items['title'],
-                                abstract: items['abstract'],
-                                url: items['url'],
-                                media: items['media'][0]),
-                          ),
-                      ],
-                    );
-                    // si a ocurrido un error, se mostrara un mensaje
-                  } else if (snapshot.hasError) {
-                    //aqui esta el mensaje
-                    return Text(
-                      '${snapshot.error}',
-                      style: TextStyle(color: Colors.black, fontSize: 11),
-                    );
-                  }
-                  //si la informacion aun no se a cargado, pues aca se le
-                  // muestra un circulo de carga
-                  return Center(child: const CircularProgressIndicator());
-                },
-              ),
-            ],
-          )),
+                    //si la informacion aun no se a cargado, pues aca se le
+                    // muestra un circulo de carga
+                    return Center(child: const CircularProgressIndicator());
+                  },
+                ),
+              ],
+            )),
+      ),
     );
   }
 }
