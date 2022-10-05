@@ -5,9 +5,7 @@ import 'dart:convert';
 import 'package:new_york_times_app/components/Card.dart';
 import 'package:new_york_times_app/components/input.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter/services.dart';
-import 'package:country_codes/country_codes.dart';
-
+import 'package:new_york_times_app/components/geoLocalization.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -71,20 +69,16 @@ class News {
 }
 
 class _HomeState extends State<Home> {
-
   late Future<News> futureNews;
   late Future<Position> position;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   TextEditingController title = TextEditingController();
   late var newsFilter;
-  CountryDetails details = CountryCodes.detailsForLocale();
 
   @override
   void initState() {
     futureNews = fetchNews();
     position = _determinePosition();
-
-    Locale locale = CountryCodes.getDeviceLocale()!;
     listeners();
     super.initState();
   }
@@ -111,49 +105,23 @@ class _HomeState extends State<Home> {
                 child: Image.network(
                     'https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/The_New_York_Times_Logo.svg/2560px-The_New_York_Times_Logo.svg.png'),
               ),
-              FutureBuilder<Position>(future: position, builder: (context, snapshot) {
-                if(snapshot.hasData){
-                  var data = snapshot.data!;
-                  return Text(data.toString());
-                } else if (snapshot.hasError) {
-                  return Text(
-                    '${snapshot.error}',
-                    style: TextStyle(color: Colors.black, fontSize: 11),
-                  );
-                }
-                return Center(child: CircularProgressIndicator(),);
-              }),
-              Container(
-                padding: const EdgeInsets.fromLTRB(25, 0, 25, 10),
-                child: Center(
-                    child: Container(
-                  child: Center(
-                    child: Column(
-                      children: [
-                        Text(
-                          'Good Morning, ',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.black,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                        Text(details.name.toString(), style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                            decoration: TextDecoration.none,)),
-                        Text('here are the most viewed articles for the las day!',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.black,
-                            decoration: TextDecoration.none,
-                        ))
-                      ],
-                    ),
-                  ),
-                )),
-              ),
+              FutureBuilder<Position>(
+                  future: position,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      Position data = snapshot.data!;
+
+                      return LocalizationMobile(position: data);
+                    } else if (snapshot.hasError) {
+                      return Text(
+                        '${snapshot.error}',
+                        style: TextStyle(color: Colors.black, fontSize: 11),
+                      );
+                    }
+                    return Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }),
               Form(
                   key: _formKey,
                   child: Input(

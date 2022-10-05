@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:new_york_times_app/views/home.dart';
-import 'package:country_codes/country_codes.dart';
 
-void main() async{
-  WidgetsFlutterBinding.ensureInitialized();
-  await CountryCodes.init();
+void main() {
   runApp(const MyApp());
 }
 
