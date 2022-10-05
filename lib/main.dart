@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:new_york_times_app/views/home.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 

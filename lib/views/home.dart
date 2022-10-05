@@ -110,7 +110,6 @@ class _HomeState extends State<Home> {
                   builder: (context, snapshot) {
                     if (snapshot.hasData) {
                       Position data = snapshot.data!;
-
                       return LocalizationMobile(position: data);
                     } else if (snapshot.hasError) {
                       return Text(
